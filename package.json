@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:where": "node scripts/db-guard.mjs",
+    "db:migrate:dev": "node scripts/db-guard.mjs && npx prisma migrate dev",
+    "db:status": "node scripts/db-guard.mjs && npx prisma migrate status"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
@@ -26,4 +29,7 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   }
+  
 }
+
+

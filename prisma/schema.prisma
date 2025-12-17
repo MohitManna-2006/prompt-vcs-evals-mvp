@@ -20,22 +20,7 @@ model Prompt {
   name        String       
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  versions    PromptVersion[]
 }
 
-model PromptVersion {
-  id        String   @id @default(uuid())
-  promptId  String
-  version   Int
-  content   String
-  model     String
-  params    Json?
-  createdAt DateTime @default(now())
-
-  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
-
-  @@unique([promptId, version])
-  @@index([promptId])
-}
 
 
