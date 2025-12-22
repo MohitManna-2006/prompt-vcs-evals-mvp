@@ -1,11 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -13,4 +7,102 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+model Prompt {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions PromptVersion[]
+  evalRuns EvalRun[]
+}
+
+model PromptVersion {
+  id       String @id @default(cuid())
+  promptId String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  version    Int
+  isBaseline Boolean @default(false)
+
+  template    String
+  model       String
+  temperature Float  @default(0.2)
+
+  createdAt DateTime  @default(now())
+  evalRuns  EvalRun[]
+
+  @@unique([promptId, version])
+  @@index([promptId])
+}
+
+model Dataset {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  items    DatasetItem[]
+  evalRuns EvalRun[]
+}
+
+model DatasetItem {
+  id        String  @id @default(cuid())
+  datasetId String
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  input    String
+  expected String?
+
+  createdAt   DateTime     @default(now())
+  evalResults EvalResult[]
+
+  @@index([datasetId])
+}
+
+model EvalRun {
+  id       String @id @default(cuid())
+  promptId String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  promptVersionId String
+  promptVersion   PromptVersion @relation(fields: [promptVersionId], references: [id], onDelete: Cascade)
+
+  datasetId String
+  dataset   Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  status     String    @default("queued")
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  results EvalResult[]
+
+  @@index([promptId])
+  @@index([promptVersionId])
+  @@index([datasetId])
+}
+
+model EvalResult {
+  id        String  @id @default(cuid())
+  evalRunId String
+  evalRun   EvalRun @relation(fields: [evalRunId], references: [id], onDelete: Cascade)
+
+  datasetItemId String
+  datasetItem   DatasetItem @relation(fields: [datasetItemId], references: [id], onDelete: Cascade)
+
+  renderedPrompt String
+  output         String
+  pass           Boolean?
+  error          String?
+
+  latencyMs Int?
+  createdAt DateTime @default(now())
+
+  @@unique([evalRunId, datasetItemId])
+  @@index([evalRunId])
 }
